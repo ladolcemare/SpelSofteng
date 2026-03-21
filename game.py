@@ -199,11 +199,13 @@ class Scherm:
                                       self.font_klein, GRIJS, 30)
         pygame.display.flip()
 
-    def toon_spel(self, vis, riffen=[]):
-        """Tekent het spelscherm met achtergrond, riffen en vis."""
+    def toon_spel(self, vis, riffen=[], haaien=[]):
+        """Tekent het spelscherm met achtergrond, riffen, haaien en vis."""
         self.oppervlak.fill(OCEAAN_BLAUW)
         for rif in riffen:
             rif.teken(self.oppervlak)
+        for haai in haaien:
+            haai.teken(self.oppervlak)
         vis.teken(self.oppervlak)
         pygame.display.flip()
 
@@ -217,6 +219,38 @@ class Haai:
         self.y = random.randint(50, HOOGTE - 50)
         self.breedte = 60
         self.hoogte = 30
+    
+    def teken(self, scherm):
+        """Teken de haai op het scherm."""
+        x, y = int(self.x), int(self.y)
+        
+        # Staart (links)
+        staart_punten = [
+            (x, y + self.hoogte // 2 - 10),
+            (x, y + self.hoogte // 2 + 10),
+            (x - 20, y + self.hoogte // 2 - 15),
+            (x - 20, y + self.hoogte // 2 + 15),
+            ]
+        pygame.draw.polygon(scherm, HAAI_DONKER, staart_punten)
+        
+        # Lichaam
+        pygame.draw.ellipse(scherm, HAAI_GRIJS,
+                            (x, y, self.breedte, self.hoogte))
+        # Buik
+        pygame.draw.ellipse(scherm, HAAI_WIT,
+                            (x + 5, y + self.hoogte // 2,
+                             self.breedte - 15, self.hoogte // 2 - 2))
+        # Bovenvin
+        vin_punten = [
+            (x + self.breedte - 10, y),
+            (x + self.breedte - 25, y),
+            (x + self.breedte - 18, y - 15),
+            ]
+        pygame.draw.polygon(scherm, HAAI_DONKER, vin_punten)
+        
+        # Oog (rechts, want haai zwemt naar links
+        pygame.draw.circle(scherm, ZWART, (x + self.breedte - 8, y + 10), 4)
+        pygame.draw.circle(scherm, WIT, (x + self.breedte - 9, y + 9), 1)
 
     def beweeg(self):
         """Moet worden geïmplementeerd door subklassen."""
@@ -232,41 +266,9 @@ class Haai:
                 vis.x + VIS_BREEDTE > self.x and
                 vis.y < self.y + self.hoogte and
                 vis.y + VIS_HOOGTE > self.y)
+    
 
-    def teken(self, scherm):
-        """Teken de haai op het scherm."""
-        x, y = int(self.x), int(self.y)
-
-        # Staart
-        staart_punten = [
-            (x + self.breedte, y + self.hoogte // 2 - 10),
-            (x + self.breedte, y + self.hoogte // 2 + 10),
-            (x + self.breedte + 20, y + self.hoogte // 2 - 15),
-            (x + self.breedte + 20, y + self.hoogte // 2 + 15),
-        ]
-        pygame.draw.polygon(scherm, HAAI_DONKER, staart_punten)
-
-        # Lichaam
-        pygame.draw.ellipse(scherm, HAAI_GRIJS,
-                            (x, y, self.breedte, self.hoogte))
-
-        # Buik
-        pygame.draw.ellipse(scherm, HAAI_WIT,
-                            (x + 5, y + self.hoogte // 2,
-                             self.breedte - 15, self.hoogte // 2 - 2))
-
-        # Bovenvin
-        vin_punten = [
-            (x + 15, y),
-            (x + 30, y),
-            (x + 22, y - 15),
-        ]
-        pygame.draw.polygon(scherm, HAAI_DONKER, vin_punten)
-
-        # Oog
-        pygame.draw.circle(scherm, ZWART, (x + 8, y + 10), 4)
-        pygame.draw.circle(scherm, WIT, (x + 9, y + 9), 1)
-
+    
 
 class GewoneHaai(Haai):
     """Een haai die rechtdoor zwemt van rechts naar links."""
@@ -300,7 +302,16 @@ class ZigzagHaai(Haai):
         self.y = self.start_y + self.golf_amplitude * pygame.math.Vector2(
             0, 1).rotate(self.hoek * 57.3).y
         
+class HaaiFactory:
+    """Verantwoordelijk voor het aanmaken van willekeurige haaien."""
 
+    @staticmethod
+    def maak_haai():
+        """Maak willekeurig een gewone of zigzag haai aan."""
+        if random.random() < 0.6:
+            return GewoneHaai()
+        return ZigzagHaai()
+    
 def main():
     """Start en beheert het spel"""
     pygame.init()
@@ -350,7 +361,7 @@ def main():
 
             # Voeg nieuwe haai toe
             if nu - laatste_haai > HAAI_INTERVAL:
-                haaien.append(maak_haai())
+                haaien.append(HaaiFactory.maak_haai())
                 laatste_haai = nu
 
             # Beweeg en verwijder riffen
