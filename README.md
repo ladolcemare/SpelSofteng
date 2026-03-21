@@ -21,10 +21,19 @@ Druk op **SPATIE** om de vis omhoog te laten zwemmen. Zwaartekracht trekt hem we
 
 **Vereisten:** Python 3 en Pygame
 
+Windows: 
 ```bash
 pip install pygame
 python flappy_vis.py
 ```
+
+Mac: 
+```bash
+pip3 install pygame
+python3 flappy_vis.py
+```
+
+
 
 ## Projectstructuur
 
