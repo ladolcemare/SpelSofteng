@@ -1,55 +1,55 @@
 # 🐟 Flappy Vis
-A Dutch-language Flappy Bird-inspired game built with Pygame, set in an underwater ocean world. Guide your fish through coral reef obstacles while dodging sharks!
+Een Nederlandstalig door Flappy-bird geïnspireerd spel gemaakt met Pygame, gesitueerd in een onderwaterwereld. Stuur je vis door koraalriffen heen terwijl je haaien ontwijkt!
 
 ## Gameplay
-Tap **SPACE** to make the fish swim upward. Gravity pulls it back down if you don't intervene. Navigate through gaps in the coral reefs without hitting the walls, the coral, or any sharks.
+Druk op **SPATIE** om de vis omhoog te laten zwemmen. Zwaartekracht trekt hem weer naar beneden. Navigeer door de gaten in de koraalriffen zonder de wanden, het koraal of haaien te raken.
 
-## Controls
+## Bediening
 
-| Key | Action |
-|-----|--------|
-| `SPACE` | Start game / Swim up |
-| `SPACE` | Restart after game over |
+| Toets | Actie |
+|-------|-------|
+| `SPATIE` | Spel starten / omhoog zwemmen |
+| `SPATIE` | Opnieuw spelen na game over |
 
-## Obstacles
+## Obstakels
 
-- **Coral Reefs** — Vertical barriers with a randomised gap to swim through
-- **Regular Sharks** — Swim straight across the screen at varying speeds
-- **Zigzag Sharks** — Swim in a sine-wave pattern, making them harder to dodge
+- **Koraalriffen** — Verticale barrières met een willekeurig gat om doorheen te zwemmen
+- **Gewone haaien** — Zwemmen rechtdoor van rechts naar links met wisselende snelheid
+- **Zigzaghaaien** — Bewegen in een golfpatroon, waardoor ze moeilijker te ontwijken zijn
 
-## Installation
+## Installatie
 
-**Requirements:** Python 3 and Pygame
+**Vereisten:** Python 3 en Pygame
 
 ```bash
 pip install pygame
 python flappy_vis.py
 ```
 
-## Project Structure
+## Projectstructuur
 
-| Class | Description |
-|-------|-------------|
-| `Vis` | The player fish — movement, jumping, and rendering |
-| `Koraalrif` | Coral reef obstacle with a randomised gap position |
-| `Haai` | Base class for all sharks |
-| `GewoneHaai` | Straight-swimming shark |
-| `ZigzagHaai` | Wave-pattern shark |
-| `Scherm` | Handles all screen rendering (start, game, game over) |
+| Klasse | Beschrijving |
+|--------|--------------|
+| `Vis` | De spelervis — beweging, springen en weergave |
+| `Koraalrif` | Koraalrif-obstakel met een willekeurige gatpositie |
+| `Haai` | Basisklasse voor alle haaien |
+| `GewoneHaai` | Rechtdoor zwemmende haai |
+| `ZigzagHaai` | Haai met golfpatroon |
+| `Scherm` | Beheert alle schermweergaven (start, spel, game over) |
 
-## Configuration
+## Configuratie
 
-Key constants at the top of the file can be tuned to adjust difficulty:
+De constanten bovenaan het bestand kunnen worden aangepast om de moeilijkheidsgraad te wijzigen:
 
-| Constant | Default | Effect |
-|----------|---------|--------|
-| `RIF_GAT_HOOGTE` | `180` | Size of the gap in coral reefs |
-| `RIF_SNELHEID` | `4` | How fast reefs scroll left |
-| `RIF_INTERVAL` | `1800ms` | Time between new reefs |
-| `HAAI_INTERVAL` | `3000ms` | Time between new sharks |
-| `ZWAARTEKRACHT` | `0.5` | Downward pull on the fish |
-| `SPRONG_KRACHT` | `-8` | Upward force on jump |
+| Constante | Standaard | Effect |
+|-----------|-----------|--------|
+| `RIF_GAT_HOOGTE` | `180` | Grootte van het gat in de koraalriffen |
+| `RIF_SNELHEID` | `4` | Hoe snel de riffen naar links scrollen |
+| `RIF_INTERVAL` | `1800ms` | Tijd tussen nieuwe riffen |
+| `HAAI_INTERVAL` | `3000ms` | Tijd tussen nieuwe haaien |
+| `ZWAARTEKRACHT` | `0.5` | Neerwaartse kracht op de vis |
+| `SPRONG_KRACHT` | `-8` | Opwaartse kracht bij een sprong |
 
-## Known Issues
+## Bekende problemen
 
-- `maak_haai()` is called in `main()` but not defined in the source — add this function before running.
+- `maak_haai()` wordt aangeroepen in `main()` maar is niet gedefinieerd in de broncode — voeg deze functie toe voordat je het spel start.
