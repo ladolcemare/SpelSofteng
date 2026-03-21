@@ -46,13 +46,14 @@ HAAI_INTERVAL = 3000  # milliseconden tussen haaien
 class Koraalrif:
     """Een obstakel bestaande uit twee koraalstukken met een gat ertussen."""
 
-    def __init__(self):
+    def __init__(self, snelheid=RIF_SNELHEID):  
         """Maakt een nieuw koraalrif aan aan de rechterkant van het scherm."""
         self.x = BREEDTE
-        self.snelheid = RIF_SNELHEID
+        self.snelheid = snelheid
         gat_midden = random.randint(150, HOOGTE - 150)
         self.gat_boven = gat_midden - RIF_GAT_HOOGTE // 2
         self.gat_onder = gat_midden + RIF_GAT_HOOGTE // 2
+        self.gepasseerd = False  
 
     def beweeg(self):
         """Beweegt het rif naar links."""
@@ -192,14 +193,17 @@ class Scherm:
                                       self.font_klein, GRIJS, 20)
         pygame.display.flip()
 
-    def toon_game_over(self):
-        """Toont het game over scherm met herstart instructie."""
-        self._teken_tekst_gecentreerd("Game Over!", self.font_groot, ROOD, -40)
+    def toon_game_over(self, score=0):  # score parameter toegevoegd
+        """Toont het game over scherm met score en herstart instructie."""
+        self._teken_tekst_gecentreerd("Game Over!", self.font_groot, ROOD, -60)
+        score_tekst = self.font_klein.render(f"Score: {score}", True, WIT)  
+        x = BREEDTE // 2 - score_tekst.get_width() // 2
+        self.oppervlak.blit(score_tekst, (x, HOOGTE // 2))
         self._teken_tekst_gecentreerd("Druk op SPATIE om opnieuw te spelen",
-                                      self.font_klein, GRIJS, 30)
+                                      self.font_klein, GRIJS, 50)
         pygame.display.flip()
 
-    def toon_spel(self, vis, riffen=[], haaien=[]):
+    def toon_spel(self, vis, riffen=[], haaien=[], score=0):  
         """Tekent het spelscherm met achtergrond, riffen, haaien en vis."""
         self.oppervlak.fill(OCEAAN_BLAUW)
         for rif in riffen:
@@ -207,7 +211,10 @@ class Scherm:
         for haai in haaien:
             haai.teken(self.oppervlak)
         vis.teken(self.oppervlak)
+        score_tekst = self.font_klein.render(f"Score: {score}", True, WIT)  
+        self.oppervlak.blit(score_tekst, (10, 10))
         pygame.display.flip()
+
 
 class Haai:
     """Basisklasse voor alle haaien."""
@@ -323,6 +330,7 @@ def main():
     laatste_haai = pygame.time.get_ticks()
     gestart = False
     game_over = False
+    score = 0
 
     scherm.toon_startscherm()
 
@@ -341,6 +349,7 @@ def main():
                         laatste_haai = pygame.time.get_ticks()
                         game_over = False
                         gestart = True
+                        score = 0
                     elif not gestart:
                         gestart = True
                     else:
@@ -349,12 +358,15 @@ def main():
         if gestart and not game_over:
             vis.beweeg()
 
-            # Voeg nieuw rif toe
             nu = pygame.time.get_ticks()
-            if nu - laatste_rif > RIF_INTERVAL:
-                riffen.append(Koraalrif())
-                laatste_rif = nu
 
+            # Voeg nieuw rif toe (interval wordt korter naarmate score stijgt)
+            rif_interval = max(800, RIF_INTERVAL - score * 20)
+            if nu - laatste_rif > rif_interval:
+                huidige_snelheid = RIF_SNELHEID + score * 0.1
+                riffen.append(Koraalrif(snelheid=huidige_snelheid))
+                laatste_rif = nu
+                
             # Voeg nieuwe haai toe
             if nu - laatste_haai > HAAI_INTERVAL:
                 haaien.append(maak_haai())
@@ -370,6 +382,12 @@ def main():
                 haai.beweeg()
             haaien = [haai for haai in haaien if not haai.is_buiten_scherm()]
 
+            # Puntentelling: +1 voor elk rif dat de vis passeert
+            for rif in riffen:
+                if not rif.gepasseerd and rif.x + RIF_BREEDTE < vis.x:
+                    score += 1
+                    rif.gepasseerd = True
+
             # Controleer botsingen
             geraakt = (vis.is_buiten_scherm() or
                        any(rif.raakt_vis(vis) for rif in riffen) or
@@ -377,10 +395,10 @@ def main():
 
             if geraakt:
                 game_over = True
-                scherm.toon_spel(vis, riffen, haaien)
-                scherm.toon_game_over()
+                scherm.toon_spel(vis, riffen, haaien, score)  # score meegeven
+                scherm.toon_game_over(score)  # score meegeven
             else:
-                scherm.toon_spel(vis, riffen, haaien)
+                scherm.toon_spel(vis, riffen, haaien, score)  # score meegeven
 
         klok.tick(FPS)
 
