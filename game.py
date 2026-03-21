@@ -1,6 +1,10 @@
 import pygame
 import sys
 import random
+import math
+import os
+import wave
+import struct
 
 # Scherm instellingen
 BREEDTE = 800
@@ -53,6 +57,7 @@ class Koraalrif:
         gat_midden = random.randint(150, HOOGTE - 150)
         self.gat_boven = gat_midden - RIF_GAT_HOOGTE // 2
         self.gat_onder = gat_midden + RIF_GAT_HOOGTE // 2
+        self.scored = False
 
     def beweeg(self):
         """Beweegt het rif naar links."""
@@ -169,6 +174,79 @@ class Vis:
                         (x + 38, y + 14, 10, 8), 3.14, 2 * 3.14, 2)
 
 
+class Explosie:
+    """Particle-based explosie special effect.
+
+    Genereert meerdere deeltjes met velocity, life en fade-out.
+    Tekent een korte flits en de deeltjes met alpha.
+    """
+
+    def __init__(self, x, y, count=48):
+        self.x = x + VIS_BREEDTE // 2
+        self.y = y + VIS_HOOGTE // 2
+        self.frame = 0
+        self.finished = False
+        self.particles = []
+        self.flash_life = 14
+
+        kleuren = [ORANJE, ROOD, DONKER_ORANJE, (255, 220, 120)]
+        for _ in range(count):
+            # verstrooi de startpositie over het rechthoek van de vis
+            start_x = random.uniform(x, x + VIS_BREEDTE)
+            start_y = random.uniform(y, y + VIS_HOOGTE)
+            angle = random.uniform(0, 2 * math.pi)
+            speed = random.uniform(2.5, 9.0)
+            vel = pygame.math.Vector2(math.cos(angle) * speed,
+                                      math.sin(angle) * speed)
+            r = random.randint(2, 6)
+            kleur = random.choice(kleuren)
+            life = random.randint(30, 70)
+            self.particles.append({
+                "pos": pygame.math.Vector2(start_x, start_y),
+                "vel": vel,
+                "r": r,
+                "c": kleur,
+                "life": life,
+                "max_life": life,
+            })
+
+        # used to track if sound already played for this explosion
+        self.sound_played = False
+
+    def update(self):
+        self.frame += 1
+        for p in self.particles:
+            p["vel"].y += 0.18  # lichte zwaartekracht
+            p["pos"] += p["vel"]
+            p["life"] -= 1
+        # verwijder dode deeltjes
+        self.particles = [p for p in self.particles if p["life"] > 0]
+        if self.frame > self.flash_life and not self.particles:
+            self.finished = True
+
+    def teken(self, scherm):
+        # overlay voor flits + deeltjes met alpha
+        overlay = pygame.Surface((BREEDTE, HOOGTE), pygame.SRCALPHA)
+
+        # flits in het midden (groeit en vervaagt snel)
+        if self.frame <= self.flash_life:
+            progress = self.frame / max(1, self.flash_life)
+            alpha = int(220 * (1 - progress))
+            radius = int(60 + 120 * progress)
+            pygame.draw.circle(overlay, (255, 250, 230, alpha),
+                               (int(self.x), int(self.y)), radius)
+
+        # teken deeltjes
+        for p in self.particles:
+            life_frac = p["life"] / p["max_life"]
+            alpha = int(255 * max(0, life_frac))
+            col = (*p["c"][:3], alpha) if len(p["c"]) == 3 else (*p["c"], alpha)
+            pygame.draw.circle(overlay, col,
+                               (int(p["pos"].x), int(p["pos"].y)), p["r"])
+
+        scherm.blit(overlay, (0, 0))
+
+
 class Scherm:
     """De schermweergaven zoals startscherm en game over."""
 
@@ -199,13 +277,36 @@ class Scherm:
                                       self.font_klein, GRIJS, 30)
         pygame.display.flip()
 
-    def toon_spel(self, vis, riffen=[]):
-        """Tekent het spelscherm met achtergrond, riffen en vis."""
-        self.oppervlak.fill(OCEAAN_BLAUW)
+    def toon_spel(self, vis, riffen=None, haaien=None, draw_vis=True, score=0, target=None):
+        """Tekent het spelscherm met achtergrond, riffen, vis en haaien.
+
+        Gebruik `None` als default om mutability van lijsten te vermijden.
+        """
+        if riffen is None:
+            riffen = []
+        if haaien is None:
+            haaien = []
+
+        surf = target if target is not None else self.oppervlak
+
+        surf.fill(OCEAAN_BLAUW)
         for rif in riffen:
-            rif.teken(self.oppervlak)
-        vis.teken(self.oppervlak)
-        pygame.display.flip()
+            rif.teken(surf)
+        for haai in haaien:
+            haai.teken(surf)
+        if draw_vis:
+            vis.teken(surf)
+
+        # alleen flippen wanneer rechtstreeks naar het scherm getekend wordt
+        # teken score linksboven
+        score_text = self.font_klein.render(str(score), True, WIT)
+        surf.blit(score_text, (10, 8))
+
+        if target is None:
+            pygame.display.flip()
+        else:
+            return surf
+
 
 
 class Haai:
@@ -301,12 +402,74 @@ class ZigzagHaai(Haai):
             0, 1).rotate(self.hoek * 57.3).y
         
 
+def maak_haai():
+    """Factory: retourneer een willekeurige haai instantie.
+
+    Dit voorkomt een NameError in de game loop.
+    """
+    if random.random() < 0.6:
+        return GewoneHaai()
+    return ZigzagHaai()
+
 def main():
     """Start en beheert het spel"""
     pygame.init()
+    # zorg dat mixer klaar is en maak laad geluid
+    try:
+        pygame.mixer.init(frequency=22050)
+    except Exception:
+        pass
     oppervlak = pygame.display.set_mode((BREEDTE, HOOGTE))
     pygame.display.set_caption("Flappy Vis")
     klok = pygame.time.Clock()
+
+    # laad of maak kort 'pop' geluid (voor springen)
+    pop_pad = os.path.join(os.path.dirname(__file__), "pop.wav")
+    if not os.path.exists(pop_pad):
+        framerate = 22050
+        duration = 0.12
+        freq = 520.0
+        amplitude = 13000
+        nframes = int(duration * framerate)
+        with wave.open(pop_pad, 'w') as wf:
+            wf.setnchannels(1)
+            wf.setsampwidth(2)
+            wf.setframerate(framerate)
+            for i in range(nframes):
+                t = i / framerate
+                env = max(0.0, 1.0 - (t / duration))**2
+                sample = amplitude * env * math.sin(2 * math.pi * freq * t)
+                val = int(max(-32767, min(32767, sample)))
+                wf.writeframes(struct.pack('<h', val))
+    try:
+        pop_sound = pygame.mixer.Sound(pop_pad)
+    except Exception:
+        pop_sound = None
+
+    # laad of maak explosie geluid (sterker, ruis-achtige burst)
+    expl_pad = os.path.join(os.path.dirname(__file__), "explosion.wav")
+    if not os.path.exists(expl_pad):
+        framerate = 22050
+        duration = 0.36
+        amplitude = 19000
+        nframes = int(duration * framerate)
+        with wave.open(expl_pad, 'w') as wf:
+            wf.setnchannels(1)
+            wf.setsampwidth(2)
+            wf.setframerate(framerate)
+            for i in range(nframes):
+                t = i / framerate
+                # korte ruis-burst met lage frequentie flutter
+                env = (1.0 - (t / duration))
+                noise = random.uniform(-1.0, 1.0)
+                tone = math.sin(2 * math.pi * 120.0 * t) * 0.5
+                sample = amplitude * env * (0.6 * noise + 0.4 * tone)
+                val = int(max(-32767, min(32767, sample)))
+                wf.writeframes(struct.pack('<h', val))
+    try:
+        explosion_sound = pygame.mixer.Sound(expl_pad)
+    except Exception:
+        explosion_sound = None
 
     vis = Vis()
     scherm = Scherm(oppervlak)
@@ -316,6 +479,9 @@ def main():
     laatste_haai = pygame.time.get_ticks()
     gestart = False
     game_over = False
+    dying = False
+    explosie = None
+    score = 0
 
     scherm.toon_startscherm()
 
@@ -333,11 +499,18 @@ def main():
                         laatste_rif = pygame.time.get_ticks()
                         laatste_haai = pygame.time.get_ticks()
                         game_over = False
+                        dying = False
+                        explosie = None
                         gestart = True
                     elif not gestart:
                         gestart = True
                     else:
                         vis.spring()
+                        if pop_sound:
+                            try:
+                                pop_sound.play()
+                            except Exception:
+                                pass
 
         if gestart and not game_over:
             vis.beweeg()
@@ -353,9 +526,17 @@ def main():
                 haaien.append(maak_haai())
                 laatste_haai = nu
 
-            # Beweeg en verwijder riffen
+            # Beweeg riffen
             for rif in riffen:
                 rif.beweeg()
+
+            # verhoog score wanneer de vis een rif gepasseerd is
+            for rif in riffen:
+                if not getattr(rif, 'scored', False) and (rif.x + RIF_BREEDTE) < vis.x:
+                    rif.scored = True
+                    score += 1
+
+            # verwijder riffen buiten scherm
             riffen = [rif for rif in riffen if not rif.is_buiten_scherm()]
 
             # Beweeg en verwijder haaien
@@ -368,12 +549,50 @@ def main():
                        any(rif.raakt_vis(vis) for rif in riffen) or
                        any(haai.raakt_vis(vis) for haai in haaien))
 
-            if geraakt:
-                game_over = True
-                scherm.toon_spel(vis, riffen, haaien)
-                scherm.toon_game_over()
+            # Start explosie wanneer geraakt (als nog niet bezig)
+            if geraakt and not dying and not game_over:
+                dying = True
+                explosie = Explosie(vis.x, vis.y)
+                # speel explosie geluid één keer
+                if explosion_sound:
+                    try:
+                        explosion_sound.play()
+                    except Exception:
+                        pass
+
+            if dying:
+                # voorkom verder bewegen van de vis tijdens explosie
+                vis.snelheid = 0
+                # render eerst naar een tussenoppervlak
+                scene = pygame.Surface((BREEDTE, HOOGTE))
+                scherm.toon_spel(vis, riffen, haaien, draw_vis=False, score=score, target=scene)
+                if explosie:
+                    explosie.teken(scene)
+                    explosie.update()
+
+                # bereken schermschud amplitude op basis van explosie progress
+                if explosie:
+                    prog = min(1.0, explosie.frame / max(1, explosie.flash_life))
+                    amp = int(18 * (1.0 - prog))
+                else:
+                    amp = 0
+                if amp > 0:
+                    ox = random.randint(-amp, amp)
+                    oy = random.randint(-amp, amp)
+                else:
+                    ox = oy = 0
+
+                # blit scene naar hoofdscherm met offset (schud-effect)
+                oppervlak.fill((0, 0, 0))
+                oppervlak.blit(scene, (ox, oy))
+                pygame.display.flip()
+
+                if explosie and explosie.finished:
+                    dying = False
+                    game_over = True
+                    scherm.toon_game_over()
             else:
-                scherm.toon_spel(vis, riffen, haaien)
+                scherm.toon_spel(vis, riffen, haaien, score=score)
 
         klok.tick(FPS)
 
