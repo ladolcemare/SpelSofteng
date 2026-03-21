@@ -199,14 +199,15 @@ class Scherm:
                                       self.font_klein, GRIJS, 30)
         pygame.display.flip()
 
-    def toon_spel(self, vis, riffen=[]):
-        """Tekent het spelscherm met achtergrond, riffen en vis."""
+    def toon_spel(self, vis, riffen=[], haaien=[]):
+        """Tekent het spelscherm met achtergrond, riffen, haaien en vis."""
         self.oppervlak.fill(OCEAAN_BLAUW)
         for rif in riffen:
             rif.teken(self.oppervlak)
+        for haai in haaien:
+            haai.teken(self.oppervlak)
         vis.teken(self.oppervlak)
         pygame.display.flip()
-
 
 class Haai:
     """Basisklasse voor alle haaien."""
@@ -299,6 +300,12 @@ class ZigzagHaai(Haai):
         self.hoek += self.golf_snelheid
         self.y = self.start_y + self.golf_amplitude * pygame.math.Vector2(
             0, 1).rotate(self.hoek * 57.3).y
+
+def maak_haai():
+    """Kiest willekeurig een type haai."""
+    if random.random() < 0.7:
+        return GewoneHaai()
+    return ZigzagHaai()
         
 
 def main():
