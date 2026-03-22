@@ -674,7 +674,18 @@ class Scherm:
 # De beweging wordt bepaald door subklassen.
 
 class Haai:
-    """Basisklasse voor alle haaien."""
+    """
+    Basisklasse voor alle haaien.
+
+    >>> import pygame
+    >>> haai = Haai()
+
+    >>> haai.breedte == 60
+    True
+
+    >>> haai.x == BREEDTE + 50
+    True
+    """
 
     def __init__(self):
         self.x = BREEDTE + 50
@@ -688,7 +699,22 @@ class Haai:
         raise NotImplementedError
 
     def is_buiten_scherm(self):
-        """Controleert of de haai buiten beeld is."""
+        """
+        Controleert of de haai buiten beeld is.
+        >>> haai = Haai()
+        >>> haai.x = -70
+        >>> haai.is_buiten_scherm()
+        True
+
+        >>> haai.x = 100
+        >>> haai.is_buiten_scherm()
+        False
+
+        >>> haai.x = -60
+        >>> haai.is_buiten_scherm()
+        False
+        """
+
         return self.x + self.breedte < 0
     
     # -----------------------------------------
@@ -699,7 +725,24 @@ class Haai:
     # -----------------------------------------
 
     def raakt_vis(self, vis):
-        """Geeft True terug als de haai de vis raakt."""
+        """
+        Geeft True terug als de haai de vis raakt.
+        >>> vis = Vis()
+        >>> haai = Haai()
+
+        >>> vis.x, vis.y = 100, 100
+        >>> haai.x, haai.y = 100, 100
+        >>> haai.raakt_vis(vis)
+        True
+
+        >>> haai.x = 500
+        >>> haai.raakt_vis(vis)
+        False
+
+        >>> haai.x = vis.x + VIS_BREEDTE + 1
+        >>> haai.raakt_vis(vis)
+        False
+        """
 
         return (vis.x < self.x + self.breedte and
                 vis.x + VIS_BREEDTE > self.x and
@@ -707,7 +750,17 @@ class Haai:
                 vis.y + VIS_HOOGTE > self.y)
 
     def teken(self, scherm):
-        """Teken de haai op het scherm."""
+        """
+        Teken de haai op het scherm.
+        >>> import pygame
+        >>> surf = pygame.Surface((100, 100))
+        >>> haai = Haai()
+        
+        >>> haai.x, haai.y = 10, 10
+        >>> haai.teken(surf)
+        >>> isinstance(surf, pygame.Surface)
+        True
+        """
 
         x, y = int(self.x), int(self.y)
 
