@@ -335,7 +335,7 @@ class Vis:
         >>> vis.is_buiten_scherm()
         False
         """
-        
+
         return self.y < 0 or self.y > HOOGTE
 
     def teken(self, scherm):
@@ -425,6 +425,21 @@ class Explosie:
     """
 
     def __init__(self, x, y, count=48):
+        """
+        >>> exp = Explosie(100, 200, count=10)
+        >>> exp.frame == 0
+        True
+
+        >>> exp.finished
+        False
+
+        >>> len(exp.particles) == 10
+        True
+
+        >>> isinstance(exp.particles[0]["pos"], pygame.math.Vector2)
+        True
+        """
+
         self.x = x + VIS_BREEDTE // 2
         self.y = y + VIS_HOOGTE // 2
 
@@ -465,7 +480,21 @@ class Explosie:
         self.sound_played = False
 
     def update(self):
-        """Update alle deeltjes en de status van de explosie."""
+        """
+        Update alle deeltjes en de status van de explosie.
+
+        >>> exp = Explosie(100, 200, count=5)
+        >>> oude_frame = exp.frame
+        >>> exp.update()
+        >>> exp.frame == oude_frame + 1
+        True
+
+        >>> exp = Explosie(100, 200, count=5)
+        >>> for _ in range(100):
+        ...     exp.update()
+        >>> exp.finished
+        True
+        """
 
         self.frame += 1
 
@@ -597,7 +626,7 @@ class Scherm:
     # -----------------------------------------
 
     def toon_spel(self, vis, riffen=None, haaien=None, draw_vis=True, score=0, target=None):
-        """Rendert het volledige spelscherm."""
+        """ Rendert het volledige spelscherm. """
 
         if riffen is None:
             riffen = []
