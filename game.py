@@ -124,7 +124,15 @@ class Koraalrif:
 
     def beweeg(self):
         """
-        Verplaatst het rif horizontaal naar links met constante snelheid."""
+        Verplaatst het rif horizontaal naar links met constante snelheid.
+        
+        >>> rif = Koraalrif(snelheid=5)
+        >>> oude_x = rif.x
+        >>> rif.beweeg()
+        >>> rif.x == oude_x - 5
+        True
+        """
+
         self.x -= self.snelheid
 
     def is_buiten_scherm(self):
@@ -187,8 +195,17 @@ class Koraalrif:
         >>> vis.y = 100
         >>> rif.raakt_vis(vis)
         False
+
+        >>> vis = Vis()
+        >>> rif = Koraalrif()
+        >>> rif.x = vis.x
+        >>> rif.gat_boven = 50
+        >>> rif.gat_onder = 200
+        >>> vis.y = 100
+        >>> rif.raakt_vis(vis)
+        False
         """
-        
+
         vis_rechts = vis.x + VIS_BREEDTE
         vis_onder = vis.y + VIS_HOOGTE
 
@@ -237,27 +254,88 @@ class Vis:
     """De speler (vis), beweegt omhoog en omlaag door de oceaan."""
 
     def __init__(self):
-        """Maakt een nieuwe vis aan in het midden van het scherm."""
+        """
+        Maakt een nieuwe vis aan in het midden van het scherm.
+
+        >>> vis = Vis()
+        >>> vis.x == VIS_X
+        True
+
+        >>> vis.y == HOOGTE // 2
+        True
+
+        >>> vis.snelheid == 0
+        True
+        """
+        
         self.x = VIS_X
         self.y = HOOGTE // 2
         self.snelheid = 0
 
     def reset(self):
-        """Zet de vis terug naar de beginpositie."""
+        """
+        Zet de vis terug naar de beginpositie.
+
+        >>> vis = Vis()
+        >>> vis.y = 100
+        >>> vis.snelheid = 5
+        >>> vis.reset()
+
+        >>> vis.y == HOOGTE // 2
+        True
+
+        >>> vis.snelheid == 0
+        True
+        """
+
         self.y = HOOGTE // 2
         self.snelheid = 0
 
     def beweeg(self):
-        """Past zwaartekracht toe en beweegt de vis."""
+        """
+        Past zwaartekracht toe en beweegt de vis.
+        >>> vis = Vis()
+        >>> oude_y = vis.y
+        >>> vis.beweeg()
+
+        >>> vis.y > oude_y
+        True
+        """
+
         self.snelheid += ZWAARTEKRACHT
         self.y += self.snelheid
 
     def spring(self):
-        """Laat de vis omhoog bewegen."""
+        """
+        Laat de vis omhoog bewegen.
+        >>> vis = Vis()
+        >>> vis.spring()
+
+        >>> vis.snelheid == SPRONG_KRACHT
+        True
+        """
+
         self.snelheid = SPRONG_KRACHT
 
     def is_buiten_scherm(self):
-        """Geef True terug als de vis buiten het scherm is."""
+        """
+        Geef True terug als de vis buiten het scherm is.
+        >>> vis = Vis()
+        >>> vis.y = -1
+        >>> vis.is_buiten_scherm()
+        True
+
+        >>> vis = Vis()
+        >>> vis.y = HOOGTE + 1
+        >>> vis.is_buiten_scherm()
+        True
+
+        >>> vis = Vis()
+        >>> vis.y = HOOGTE // 2
+        >>> vis.is_buiten_scherm()
+        False
+        """
+        
         return self.y < 0 or self.y > HOOGTE
 
     def teken(self, scherm):
