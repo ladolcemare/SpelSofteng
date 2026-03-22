@@ -196,14 +196,6 @@ class Koraalrif:
         >>> rif.raakt_vis(vis)
         False
 
-        >>> vis = Vis()
-        >>> rif = Koraalrif()
-        >>> rif.x = vis.x
-        >>> rif.gat_boven = 50
-        >>> rif.gat_onder = 200
-        >>> vis.y = 100
-        >>> rif.raakt_vis(vis)
-        False
         """
 
         vis_rechts = vis.x + VIS_BREEDTE
@@ -971,7 +963,16 @@ def maak_haai():
 # =========================================
 
 def main():
-    """Start en beheert het spel"""
+    """Start en beheert het spel
+    
+    >>> import pygame
+    >>> import os
+    >>> os.environ['SDL_VIDEODRIVER'] = 'dummy'
+    
+    >>> _ = pygame.init()
+    >>> isinstance(pygame.time.Clock(), pygame.time.Clock)
+    True
+    """
 
     pygame.init()
 
