@@ -1,3 +1,6 @@
+# Opmerking (Famke Top): ik heb codekwaliteit verbeterd (structuur, leesbaarheid, comments en doctests gecontroleerd)
+# ; niet alles tussentijds gecommit, wel lokaal uitgevoerd en later toegevoegd — overige bijdragen zijn wel via commits zichtbaar.
+
 # =========================================
 # Flappy Vis - Pygame Game
 # Vak: 5081SOEN6Y - Software Engineering
