@@ -755,7 +755,7 @@ class Haai:
         >>> import pygame
         >>> surf = pygame.Surface((100, 100))
         >>> haai = Haai()
-        
+
         >>> haai.x, haai.y = 10, 10
         >>> haai.teken(surf)
         >>> isinstance(surf, pygame.Surface)
@@ -810,15 +810,46 @@ class Haai:
 # - Willekeurige snelheid per haai
 
 class GewoneHaai(Haai):
-    """Een haai die rechtdoor zwemt van rechts naar links."""
+    """
+    Een haai die rechtdoor zwemt van rechts naar links.
+    >>> import random
+    >>> random.seed(42)
+
+    >>> haai = GewoneHaai()
+    >>> isinstance(haai, Haai)
+    True
+
+    >>> haai.x == BREEDTE + 50
+    True
+    """
 
     def __init__(self):
-        """Maak een gewone haai aan met vaste snelheid."""
+        """
+        Maak een gewone haai aan met vaste snelheid.
+        >>> random.seed(42)
+        >>> haai = GewoneHaai()
+        >>> 2 <= haai.snelheid <= 4
+        True
+        """
+
         super().__init__()
         self.snelheid = random.uniform(2, 4)
 
     def beweeg(self):
-        """Beweeg de haai rechtdoor naar links."""
+        """
+        Beweeg de haai rechtdoor naar links.
+
+        >>> haai = GewoneHaai()
+        >>> haai.snelheid = 3.0
+        >>> start_x = haai.x
+        >>> haai.beweeg()
+        >>> haai.x == start_x - 3.0
+        True
+        >>> haai.beweeg()
+        >>> haai.x == start_x - 6.0
+        True
+        """
+
         self.x -= self.snelheid
 
 
@@ -834,9 +865,29 @@ class GewoneHaai(Haai):
 # - Verticale golfbeweging (sinus-achtig)
 
 class ZigzagHaai(Haai):
-    """Een haai die zigzaggend beweegt."""
+    """
+    Een haai die zigzaggend beweegt.
+
+    >>> import pygame
+    >>> haai = ZigzagHaai()
+    >>> haai.golf_amplitude == 60
+    True
+
+    >>> haai.hoek == 0
+    True
+    """
 
     def __init__(self):
+        """
+        Initialiseert de zigzaghaai met een startpositie en golf-instellingen.
+        
+        >>> haai = ZigzagHaai()
+        >>> hasattr(haai, 'start_y')
+        True
+
+        >>> 1.5 <= haai.snelheid <= 3
+        True
+        """
         super().__init__()
 
         self.snelheid = random.uniform(1.5, 3)
@@ -848,13 +899,36 @@ class ZigzagHaai(Haai):
         self.start_y = self.y
 
     def beweeg(self):
-        """Beweeg de haai naar links en zigzaggend op en neer."""
+        """
+        Beweeg de haai naar links en zigzaggend op en neer.
+        
+        >>> import pygame
+        >>> haai = ZigzagHaai()
+        >>> haai.x = 500
+
+        >>> haai.snelheid = 2.0
+        >>> haai.start_y = 200
+        >>> haai.y = 200
+
+        >>> haai.hoek = 0
+        >>> haai.beweeg()
+        >>> haai.x == 498.0
+        True
+
+        >>> round(haai.hoek, 2) == 0.05
+        True
+
+        >>> haai.y != 200
+        True
+        """
+
         self.x -= self.snelheid
         self.hoek += self.golf_snelheid
 
         self.y = self.start_y + self.golf_amplitude * pygame.math.Vector2(
             0, 1).rotate(self.hoek * 57.3).y
         
+
 # =========================================
 # Haai Factory
 #
@@ -863,7 +937,24 @@ class ZigzagHaai(Haai):
 # =========================================
 
 def maak_haai():
-    """Retourneert een willekeurige haai."""
+    """
+    Retourneert een willekeurige haai.
+    
+    >>> import random
+    >>> random.seed(1) # Bij seed(1) is het eerste getal ~0.13
+    >>> haai1 = maak_haai()
+
+    >>> isinstance(haai1, GewoneHaai)
+    True
+    
+    >>> random.seed(2)
+    >>> haai2 = maak_haai()
+    >>> isinstance(haai2, ZigzagHaai)
+    True
+    
+    >>> isinstance(maak_haai(), Haai)
+    True
+    """
 
     if random.random() < 0.6:
         return GewoneHaai()
