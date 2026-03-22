@@ -1,5 +1,5 @@
-# Opmerking (Famke Top): ik heb codekwaliteit verbeterd (structuur, leesbaarheid, comments en doctests gecontroleerd)
-# ; niet alles tussentijds gecommit, wel lokaal uitgevoerd en later toegevoegd — overige bijdragen zijn wel via commits zichtbaar.
+# Opmerking (Famke Top): ik heb codekwaliteit verbeterd (structuur, leesbaarheid en comments); 
+# niet alles tussentijds gecommit — overige bijdragen zijn wel via commits zichtbaar.
 
 # =========================================
 # Flappy Vis - Pygame Game
@@ -100,7 +100,18 @@ class Koraalrif:
     """Een obstakel bestaande uit twee koraalstukken met een gat ertussen."""
 
     def __init__(self, snelheid=RIF_SNELHEID):  
-        """Maakt een nieuw koraalrif aan aan de rechterkant van het scherm."""
+        """ 
+        Maakt een nieuw koraalrif aan aan de rechterkant van het scherm.
+
+        >>> isinstance(Koraalrif().gat_boven, int)
+        True
+
+        >>> isinstance(Koraalrif().gat_onder, int)
+        True
+
+        >>> Koraalrif().x == BREEDTE
+        True
+        """
 
         self.x = BREEDTE
         self.snelheid = snelheid
@@ -112,11 +123,30 @@ class Koraalrif:
         self.gepasseerd = False  
 
     def beweeg(self):
-        """Verplaatst het rif horizontaal naar links met constante snelheid."""
+        """
+        Verplaatst het rif horizontaal naar links met constante snelheid."""
         self.x -= self.snelheid
 
     def is_buiten_scherm(self):
-        """Geeft True terug als het rif links van het scherm is."""
+        """
+        Geeft True terug als het rif links van het scherm is.
+
+        >>> rif = Koraalrif()
+        >>> rif.x = -RIF_BREEDTE - 1
+        >>> rif.is_buiten_scherm()
+        True
+
+        >>> rif = Koraalrif()
+        >>> rif.x = 0
+        >>> rif.is_buiten_scherm()
+        False
+
+        >>> rif = Koraalrif()
+        >>> rif.x = -RIF_BREEDTE
+        >>> rif.is_buiten_scherm()
+        False
+        """
+        
         return self.x + RIF_BREEDTE < 0
 
     # -----------------------------------------
@@ -128,7 +158,37 @@ class Koraalrif:
     # -----------------------------------------
 
     def raakt_vis(self, vis):
-        """Geeft True terug als de vis het rif raakt."""
+        """
+        Geeft True terug als de vis het rif raakt.
+        
+        >>> vis = Vis()
+        >>> rif = Koraalrif()
+        >>> rif.x = vis.x
+        >>> rif.gat_boven = 0
+        >>> rif.gat_onder = 10
+        >>> vis.y = 100
+        >>> rif.raakt_vis(vis)
+        True
+
+        >>> vis = Vis()
+        >>> rif = Koraalrif()
+        >>> rif.x = vis.x
+        >>> rif.gat_boven = 50
+        >>> rif.gat_onder = 200
+        >>> vis.y = 100
+        >>> rif.raakt_vis(vis)
+        False
+
+        >>> vis = Vis()
+        >>> rif = Koraalrif()
+        >>> rif.x = vis.x + 200
+        >>> rif.gat_boven = 0
+        >>> rif.gat_onder = 10
+        >>> vis.y = 100
+        >>> rif.raakt_vis(vis)
+        False
+        """
+        
         vis_rechts = vis.x + VIS_BREEDTE
         vis_onder = vis.y + VIS_HOOGTE
 
